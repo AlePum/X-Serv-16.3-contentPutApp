@@ -26,25 +26,46 @@ class contentApp (webapp.webApp):
 
     def parse(self, request):
         """Return the resource name (including /)"""
+        metodo = request.split(' ')[0]
+        recurso = request.split(' ')[1]
+        cuerpo = request.split(' ')[-1]
+        try:
+            cuerpo = request.split('\r\n\r\n')[1]
+        except IndexError:
+            cuerpo = ""
+        return (metodo,recurso,cuerpo)
 
-        return request.split(' ', 2)[1]
-
-    def process(self, resourceName):
+    def process(self, peticion):
         """Process the relevant elements of the request.
 
         Finds the HTML text corresponding to the resource name,
         ignoring requests for resources not in the dictionary.
         """
 
-        if resourceName in self.content.keys():
+        metodo, recurso, cuerpo = peticion
+        if metodo == "GET":
+            if recurso in self.content:
+                httpCode = "200 OK"
+                htmlBody = "<html><body>" + self.content[recurso] \
+                #Introduccion de un formulario en el metodo
+#                    + '<form method="POST" action="">' \
+#                    + 'Name: <input type="text" name="firstname"><br>' \
+#                    + 'Surname: <input type="text" name="lastname"><br>' \
+#                    + '<input type="submit" value="Enviar">' \
+#                    + '</form>' \
+#                    + "</body></html>"
+            else:
+                httpCode = "404 Not Found"
+                htmlBody = "Not Found"
+        elif metodo == "PUT" or metodo =="POST":
+            self.content[recurso] = cuerpo
             httpCode = "200 OK"
-            htmlBody = "<html><body>" + self.content[resourceName] \
-                + "</body></html>"
+            htmlBody = "Todo ha ido bien"
         else:
-            httpCode = "404 Not Found"
-            htmlBody = "Not Found"
+            httpCode = "405 Method Not Allowed"
+            htmlBody = "Error"
         return (httpCode, htmlBody)
 
 
 if __name__ == "__main__":
-    testWebApp = contentApp("localhost", 1234)
+    testWebApp = contentApp("localhost", 1235)
